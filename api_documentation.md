@@ -415,7 +415,7 @@ POST /GetUsersNames
 ```json
 {
     "data": {
-        "8684E3430EEC00EE": "sebuu"
+        "USER_ID_HASH": "example_username"
     }
 }
 ```
