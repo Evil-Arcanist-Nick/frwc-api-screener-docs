@@ -1,0 +1,20 @@
+{
+  "name": "browser-log-analyzer",
+  "version": "1.0.0",
+  "description": "Network request logger for api.prod.runiverseservers.com",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "keywords": [
+    "chrome",
+    "devtools",
+    "network",
+    "logs"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chrome-remote-interface": "^0.33.0"
+  }
+}

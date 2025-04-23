@@ -1,0 +1,4 @@
+logs_for_documentation/
+node_modules/
+.env
+.DS_Store
