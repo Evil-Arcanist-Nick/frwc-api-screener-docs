@@ -27,10 +27,11 @@ npm install
 1. Launch Chrome with remote debugging enabled:
 
 ```powershell
-Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentList "--remote-debugging-port=9222"
+Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentList "--remote-debugging-port=9222 --user-data-dir=C:\temp\chrome-debug --no-first-run"
 ```
 
 2. Start the logger:
+
 ```bash
 npm start
 ```

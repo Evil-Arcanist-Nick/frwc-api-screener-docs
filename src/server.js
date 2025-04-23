@@ -21,21 +21,10 @@ function parseQueryParams(url) {
 
 async function saveLog(log) {
     try {
-        const date = new Date();
-        const fileName = `${date.toISOString().split('T')[0]}.json`;
-        const filePath = path.join(config.storage.path, fileName);
+        const filePath = path.join(config.storage.path, 'all_logs.json');
         
         // Ensure directory exists
-        await fs.mkdir(config.storage.path, { recursive: true });
-        
-        // Read existing logs or create new array
-        let logs = [];
-        try {
-            const content = await fs.readFile(filePath, 'utf8');
-            logs = JSON.parse(content);
-        } catch (err) {
-            // File doesn't exist yet, that's fine
-        }
+        await fs.mkdir(path.dirname(filePath), { recursive: true });
         
         // Parse query parameters from URL
         const queryParams = parseQueryParams(log.url);
@@ -64,12 +53,13 @@ async function saveLog(log) {
             }
         } catch (err) {
             console.error('Error parsing response body:', err);
-            responseData = { error: 'Failed to parse response body' };
+            // Store raw response body if parsing fails
+            responseData = { error: 'Failed to parse response body', raw: log.responseBody };
         }
 
-        // Create log entry in exact format requested
+        // Create log entry
         const logEntry = {
-            timestamp: date.toISOString(),
+            timestamp: new Date().toISOString(),
             endpoint: log.url,
             request: {
                 method: log.method,
@@ -81,13 +71,30 @@ async function saveLog(log) {
             }
         };
 
-        // Ensure the log directory exists
-        await fs.mkdir(path.dirname(filePath), { recursive: true });
+        // Append the log entry to file
+        // If file doesn't exist, create it with an opening bracket
+        try {
+            await fs.access(filePath);
+        } catch {
+            await fs.writeFile(filePath, '[\n', 'utf8');
+        }
+
+        // Read the last character to check if we need to add a comma
+        let needsComma = false;
+        try {
+            const stat = await fs.stat(filePath);
+            if (stat.size > 2) { // If file has more than just '[\n'
+                needsComma = true;
+            }
+        } catch (err) {
+            console.error('Error checking file:', err);
+        }
+
+        // Append the log entry
+        const logString = JSON.stringify(logEntry, null, 2);
+        const appendContent = needsComma ? `,\n${logString}` : logString;
+        await fs.appendFile(filePath, appendContent + '\n', 'utf8');
         
-        logs.push(logEntry);
-        
-        // Save updated logs with proper formatting
-        await fs.writeFile(filePath, JSON.stringify(logs, null, 2));
         console.log(`Logged ${log.method} request to ${log.url}`);
     } catch (err) {
         console.error('Error saving log:', err);
@@ -114,12 +121,8 @@ async function setupCDP() {
         
         const { Network, Page } = client;
 
-        // Enable network tracking with more detailed options
-        await Network.enable({
-            maxPostDataSize: 65536 * 10, // Increase post data size limit
-            maxResourceBufferSize: 65536 * 10,
-            maxTotalBufferSize: 65536 * 50
-        });
+        // Enable network tracking with NO size limits
+        await Network.enable();
         await Page.enable();
 
         console.log('Setting up network event handlers...');
